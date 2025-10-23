@@ -1,0 +1,37 @@
+name: Daily health check
+
+on:
+  schedule:
+    - cron: "0 6 * * *"  
+  workflow_dispatch: {}  
+
+jobs:
+  check_and_notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping website
+        id: ping
+        run: |
+          URL="https://alliedium.alliedtesting.com/"
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "$URL" || echo "000")
+          echo "code=$CODE" >> $GITHUB_OUTPUT
+
+
+      - name: Post OK message to Slack when 2xx
+        if: startsWith(steps.ping.outputs.code, '2')
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          TEXT="✅ Alliedium is UP (HTTP ${{ steps.ping.outputs.code }}) — $(date -u +'%Y-%m-%d %H:%M UTC')"
+          curl -s -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"$TEXT\"}" "$SLACK_WEBHOOK_URL"
+
+
+      - name: Post FAIL message to Slack when not 2xx
+        if: "!startsWith(steps.ping.outputs.code, '2')"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          TEXT="❌ Alliedium health-check failed (HTTP ${{ steps.ping.outputs.code }}) — $(date -u +'%Y-%m-%d %H:%M UTC')"
+          curl -s -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"$TEXT\"}" "$SLACK_WEBHOOK_URL"
