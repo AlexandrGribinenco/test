@@ -35,3 +35,5 @@ jobs:
           TEXT="❌ Alliedium health-check failed (HTTP ${{ steps.ping.outputs.code }}) — $(date -u +'%Y-%m-%d %H:%M UTC')"
           curl -s -X POST -H 'Content-type: application/json' \
             --data "{\"text\":\"$TEXT\"}" "$SLACK_WEBHOOK_URL"
+
+          curl -fsS -m 10 https://uptime.betterstack.com/api/v1/heartbeat/abc123xyz456 || true
