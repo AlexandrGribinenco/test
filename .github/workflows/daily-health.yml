@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           
@@ -16,7 +16,7 @@ jobs:
         id: ping
         run: |
           URL="https://alliedium.alliedtesting.com/"
-          CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "$URL" || echo "000")
+          CODE=$(curl -L -s -o /dev/null -w "%{http_code}" --max-time 20 "$URL" || echo "000")
           echo "code=$CODE" >> $GITHUB_OUTPUT
           
       - name: Post OK message to Slack when 2xx
@@ -39,7 +39,7 @@ jobs:
           curl -fsS -m 10 https://uptime.betterstack.com/api/v1/heartbeat/abc123xyz456 || true
           
       - name: Keep workflow alive
-        if: github.event_name == 'schedule'  # ✅ Исправлено здесь!
+        if: github.event_name == 'schedule'
         run: |
           if [ $(date +%d) == "01" ]; then
             git config user.name "github-actions[bot]"
